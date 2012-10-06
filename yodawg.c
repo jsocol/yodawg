@@ -17,12 +17,10 @@ struct yonode *yodawg_create_node(char value)
 {
     struct yonode *new;
     new = malloc(sizeof (struct yonode));
-    if (new == NULL) return -1;
     new->cursize = 0;
     new->maxsize = STARTSIZE;
     new->value = value;
     new->edges = malloc(STARTSIZE * (sizeof (struct yonode *)));
-    if (new->edges == NULL) return -2;
     return new;
 }
 
@@ -61,17 +59,21 @@ void yodawg_add_string(struct yonode *dawg, char *str)
     char c;
     struct yonode *cur, *buf;
     int i;
+
     cur = dawg;
-    while((c = str++) != '\0') {
+    while((c = *str++) != '\0') {
         i = yodawg_value_in_dawg(cur, c);
         if(i < 0) {
             buf = yodawg_create_node(c);
             yodawg_add_node(cur, buf);
-            cur = cur->edges[cur->cursize];
+            cur = cur->edges[cur->cursize - 1];
         }
         else {
             cur = cur->edges[i];
         }
+    }
+    if(yodawg_value_in_dawg(cur, EOW) < 0) {
+        yodawg_add_node(cur, dawg->edges[0]);
     }
 }
 
@@ -79,10 +81,21 @@ void yodawg_add_string(struct yonode *dawg, char *str)
 int main(int argc, char **argv)
 {
     struct yonode *dawg = yodawg_create();
-    printf("start: 0x%x\n", dawg);
-    printf("end:   0x%x\n", dawg->edges);
-    printf("eow:   0x%x\n", dawg->edges[0]);
-    printf("size:  %d\n", dawg->cursize);
-    printf("eow value: %d\n", dawg->edges[0]->value);
+    struct yonode *cur;
+    int i;
+    yodawg_add_string(dawg, "foo0");
+    yodawg_add_string(dawg, "bar");
+    yodawg_add_string(dawg, "quxxxx");
+
+    if (argc < 2) return -1;
+    printf("find: %s\n", argv[1]);
+    i = yodawg_value_in_dawg(dawg, argv[1][0]);
+    printf("start at: %d\n", i);
+    cur = dawg->edges[i];
+    while(cur->value != EOW) {
+        printf("cur: 0x%x\n", cur);
+        printf("val: %c\n", cur->value);
+        cur = cur->edges[cur->cursize - 1]; 
+    }
     return 0;
 }
