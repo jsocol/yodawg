@@ -56,6 +56,25 @@ int yodawg_value_in_dawg(struct yonode *parent, char value)
     return -1;
 }
 
+void yodawg_add_string(struct yonode *dawg, char *str)
+{
+    char c;
+    struct yonode *cur, *buf;
+    int i;
+    cur = dawg;
+    while((c = str++) != '\0') {
+        i = yodawg_value_in_dawg(cur, c);
+        if(i < 0) {
+            buf = yodawg_create_node(c);
+            yodawg_add_node(cur, buf);
+            cur = cur->edges[cur->cursize];
+        }
+        else {
+            cur = cur->edges[i];
+        }
+    }
+}
+
 
 int main(int argc, char **argv)
 {
