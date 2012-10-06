@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #define STARTSIZE 16
+#define EOW -1
 
 struct yonode {
     char value;
@@ -10,7 +11,7 @@ struct yonode {
 };
 
 void yodawg_add_node(struct yonode *, struct yonode *);
-int yodawg_node_in_dawg(struct yonode *, struct yonode *);
+int yodawg_value_in_dawg(struct yonode *, char);
 
 struct yonode *yodawg_create_node(char value)
 {
@@ -29,9 +30,9 @@ struct yonode *yodawg_create()
 {
     struct yonode *start, *eow;
     start = yodawg_create_node(0);
-    eow = yodawg_create_node(-1);
+    eow = yodawg_create_node(EOW);
     yodawg_add_node(start, eow);
-    return &start;
+    return start;
 }
 
 void yodawg_add_node(struct yonode *parent, struct yonode *child)
@@ -46,21 +47,23 @@ void yodawg_add_node(struct yonode *parent, struct yonode *child)
     parent->edges[parent->cursize++] = child;
 }
 
-int yodawg_node_in_dawg(struct yonode *parent, struct yonode *child)
+int yodawg_value_in_dawg(struct yonode *parent, char value)
 {
     int i;
     for(i = 0; i < parent->cursize; i++)
-        if (child == parent->edges[i])
-            return 1;
-    return 0;
+        if (value == parent->edges[i]->value)
+            return i;
+    return -1;
 }
 
 
 int main(int argc, char **argv)
 {
-    struct yonode *cdawg = yodawg_create();
-    printf("start: 0x%x\n", cdawg);
-    printf("end:   0x%x\n", cdawg->edges[0]);
-    printf("eow value: %d\n", cdawg->edges[0]->value);
+    struct yonode *dawg = yodawg_create();
+    printf("start: 0x%x\n", dawg);
+    printf("end:   0x%x\n", dawg->edges);
+    printf("eow:   0x%x\n", dawg->edges[0]);
+    printf("size:  %d\n", dawg->cursize);
+    printf("eow value: %d\n", dawg->edges[0]->value);
     return 0;
 }
