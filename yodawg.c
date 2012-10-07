@@ -77,6 +77,25 @@ void yodawg_add_string(struct yonode *dawg, char *str)
     }
 }
 
+void yodawg_free_node(struct yonode *node)
+{
+    free(node);
+}
+
+void yodawg_free_dawg(struct yonode *dawg)
+{
+    while(dawg->cursize > 0) {
+        dawg->cursize--;
+        yodawg_free_dawg(dawg->edges[dawg->cursize]);
+        dawg->edges[dawg->cursize] = NULL;
+    }
+    yodawg_free_node(dawg);
+}
+
+char *yodawg_find_strings(char *prefix)
+{
+}
+
 
 int main(int argc, char **argv)
 {
@@ -85,6 +104,7 @@ int main(int argc, char **argv)
     int i;
     yodawg_add_string(dawg, "foo0");
     yodawg_add_string(dawg, "bar");
+    yodawg_add_string(dawg, "baz");
     yodawg_add_string(dawg, "quxxxx");
 
     if (argc < 2) return -1;
@@ -97,5 +117,8 @@ int main(int argc, char **argv)
         printf("val: %c\n", cur->value);
         cur = cur->edges[cur->cursize - 1]; 
     }
+    cur = NULL;
+    yodawg_free_dawg(dawg);
+    printf("Freed dawg.\n");
     return 0;
 }
