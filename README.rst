@@ -4,6 +4,8 @@ yodawg
 
 A barebones implementation of a Directed Acyclic Word Graph (DAWG) in C.
 
+Run ``make`` and then ``./yodawg <prefix>`` to test.
+
 
 What is a DAWG?
 ===============
