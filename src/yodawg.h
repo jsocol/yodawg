@@ -29,6 +29,7 @@ struct yonode *yodawg_create_node(char);
 int yodawg_add_node(struct yonode *, struct yonode *);
 int yodawg_value_in_node(struct yonode *, char);
 int yodawg_add_string(struct yonode *, char *);
+int yodawg_string_in_dawg(struct yonode *, char *);
 void yodawg_free_node(struct yonode *);
 struct yonode **yodawg_add_dawg_to_list(struct yonode **, int *, int *, struct yonode *);
 int yodawg_free_dawg(struct yonode *);

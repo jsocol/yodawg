@@ -21,20 +21,21 @@ int main(int argc, char **argv)
     yodawg_add_string(dawg, "bbq");
 
     // Booyahkahsha.
+    if(yodawg_string_in_dawg(dawg, argv[1]))
+        printf("The string %s is in the dawg.\n\n", argv[1]);
+    else
+        printf("The string %s is not in the dawg.\n\n", argv[1]);
+
     strings = yodawg_find_strings(dawg, argv[1]);
-    if(strings->cursize < 0) {
-        printf("prefix not in dawg.\n");
-    }
-    else {
-        printf("found %d matching strings.\n", strings->cursize);
-    }
+    if(strings->cursize < 0)
+        printf("Prefix not in dawg.\n");
+    else
+        printf("Found %d matching strings:\n", strings->cursize);
 
     yodawg_free_dawg(dawg);
-    printf("Freed dawg.\n");
     
-    for(j = 0; j < strings->cursize; j++) {
-        printf("string: %s\n", strings->words[j]);
-    }
+    for(j = 0; j < strings->cursize; j++)
+        printf("%s\n", strings->words[j]);
 
     yodawg_free_wordlist(strings);
 

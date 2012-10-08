@@ -82,6 +82,22 @@ int yodawg_add_string(struct yonode *dawg, char *str)
     return 0;
 }
 
+int yodawg_string_in_dawg(struct yonode *dawg, char *str)
+{
+    char c;
+    int i;
+    struct yonode *cur;
+
+    cur = dawg;
+    while((c = *str++) != '\0') {
+        i = yodawg_value_in_node(cur, c);
+        if(i < 0) return 0;
+        cur = cur->edges[i];
+    }
+    if(yodawg_value_in_node(cur, YO_EOW) < 0) return 0;
+    return 1;
+}
+
 void yodawg_free_node(struct yonode *node)
 {
     free(node->edges);
