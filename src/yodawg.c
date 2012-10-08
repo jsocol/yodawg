@@ -49,11 +49,11 @@ int yodawg_add_node(struct yonode *parent, struct yonode *child)
     return 0;
 }
 
-int yodawg_value_in_dawg(struct yonode *parent, char value)
+int yodawg_value_in_node(struct yonode *node, char value)
 {
     int i;
-    for(i = 0; i < parent->cursize; i++)
-        if (value == parent->edges[i]->value)
+    for(i = 0; i < node->cursize; i++)
+        if (value == node->edges[i]->value)
             return i;
     return -1;
 }
@@ -66,7 +66,7 @@ int yodawg_add_string(struct yonode *dawg, char *str)
 
     cur = dawg;
     while((c = *str++) != '\0') {
-        i = yodawg_value_in_dawg(cur, c);
+        i = yodawg_value_in_node(cur, c);
         if(i < 0) {
             buf = yodawg_create_node(c);
             if(yodawg_add_node(cur, buf)) return -1;
@@ -76,7 +76,7 @@ int yodawg_add_string(struct yonode *dawg, char *str)
             cur = cur->edges[i];
         }
     }
-    if(yodawg_value_in_dawg(cur, YO_EOW) < 0) {
+    if(yodawg_value_in_node(cur, YO_EOW) < 0) {
         if(yodawg_add_node(cur, dawg->edges[0])) return -1;
     }
     return 0;
@@ -218,7 +218,7 @@ struct yowordlist *yodawg_find_strings(struct yonode *dawg, char *prefix)
     // Find deepest common point.
     p = prefix;
     while((c = *p++) != '\0') {
-        i = yodawg_value_in_dawg(dawg, c);
+        i = yodawg_value_in_node(dawg, c);
         if(i < 0) { // Prefix not in dawg.
             strings->cursize = -1;
             return strings;
