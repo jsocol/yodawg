@@ -1,35 +1,52 @@
 #include "yodawg.h"
 
-struct yonode *yodawg_create_node(char value)
-{
-    struct yonode *node;
-    node = malloc(sizeof (struct yonode));
-    node->cursize = 0;
-    node->maxsize = YO_STARTSIZE;
-    node->value = value;
-    node->edges = malloc(YO_STARTSIZE * (sizeof (struct yonode *)));
-    return node;
-}
-
 struct yonode *yodawg_create()
 {
     struct yonode *start, *eow;
     start = yodawg_create_node(0);
+    if(start == NULL) return NULL;
     eow = yodawg_create_node(YO_EOW);
-    yodawg_add_node(start, eow);
+    if(eow == NULL) {
+        yodawg_free_node(start);
+        return NULL;
+    }
+    if(yodawg_add_node(start, eow)) {
+        yodawg_free_node(eow);
+        yodawg_free_node(start);
+        return NULL;
+    }
     return start;
 }
 
-void yodawg_add_node(struct yonode *parent, struct yonode *child)
+struct yonode *yodawg_create_node(char value)
+{
+    struct yonode *node;
+    node = malloc(sizeof (struct yonode));
+    if(node == NULL) return NULL;
+    node->cursize = 0;
+    node->maxsize = YO_STARTSIZE;
+    node->value = value;
+    node->edges = malloc(YO_STARTSIZE * sizeof (struct yonode *));
+    if(node->edges == NULL) {
+        free(node);
+        return NULL;
+    }
+    return node;
+}
+
+int yodawg_add_node(struct yonode *parent, struct yonode *child)
 {
     if (parent->edges == NULL) {
-        parent->edges = malloc(YO_STARTSIZE * (sizeof (struct yonode *)));
+        parent->edges = malloc(YO_STARTSIZE * sizeof (struct yonode *));
+        if(parent->edges == NULL) return -1;
     }
     else if (parent->cursize == parent->maxsize) {
         parent->maxsize *= 2;
         parent->edges = realloc(parent->edges, parent->maxsize);
+        if(parent->edges == NULL) return -1;
     }
     parent->edges[parent->cursize++] = child;
+    return 0;
 }
 
 int yodawg_value_in_dawg(struct yonode *parent, char value)
@@ -41,7 +58,7 @@ int yodawg_value_in_dawg(struct yonode *parent, char value)
     return -1;
 }
 
-void yodawg_add_string(struct yonode *dawg, char *str)
+int yodawg_add_string(struct yonode *dawg, char *str)
 {
     char c;
     struct yonode *cur, *buf;
@@ -52,7 +69,7 @@ void yodawg_add_string(struct yonode *dawg, char *str)
         i = yodawg_value_in_dawg(cur, c);
         if(i < 0) {
             buf = yodawg_create_node(c);
-            yodawg_add_node(cur, buf);
+            if(yodawg_add_node(cur, buf)) return -1;
             cur = buf;
         }
         else {
@@ -60,15 +77,13 @@ void yodawg_add_string(struct yonode *dawg, char *str)
         }
     }
     if(yodawg_value_in_dawg(cur, YO_EOW) < 0) {
-        yodawg_add_node(cur, dawg->edges[0]);
+        if(yodawg_add_node(cur, dawg->edges[0])) return -1;
     }
+    return 0;
 }
 
 void yodawg_free_node(struct yonode *node)
 {
-    if(node == NULL) {
-        return;
-    }
     free(node->edges);
     free(node);
 }
@@ -93,6 +108,7 @@ struct yonode **yodawg_add_dawg_to_list(struct yonode **nodes, int *cursize, int
             while((*cursize) >= (*maxsize)) {
                 (*maxsize) *= 2;
                 nodes = realloc(nodes, (*maxsize) * sizeof (struct yonode *));
+                if(nodes == NULL) return NULL;
             }
             nodes[*cursize] = cur;
             ++*cursize;
@@ -103,7 +119,7 @@ struct yonode **yodawg_add_dawg_to_list(struct yonode **nodes, int *cursize, int
     return nodes;
 }
 
-void yodawg_free_dawg(struct yonode *dawg)
+int yodawg_free_dawg(struct yonode *dawg)
 {
     int *cursize;
     int *maxsize;
@@ -114,9 +130,11 @@ void yodawg_free_dawg(struct yonode *dawg)
 
     cursize = &_cursize;
     maxsize = &_maxsize;
-    nodes = malloc((*maxsize) * sizeof (struct yonode *));
+    nodes = malloc(*maxsize * sizeof (struct yonode *));
+    if(nodes == NULL) return -1;
 
     nodes = yodawg_add_dawg_to_list(nodes, cursize, maxsize, dawg);
+    if(nodes == NULL) return -1;
 
     // Free the children.
     for(i = 0; i < *cursize; i++) {
@@ -126,15 +144,17 @@ void yodawg_free_dawg(struct yonode *dawg)
     yodawg_free_node(dawg);
 
     free(nodes);
+    return 0;
 }
 
-void yodawg_build_strings(struct yonode *dawg, const char *prefix, struct yowordlist *strings)
+int yodawg_build_strings(struct yonode *dawg, const char *prefix, struct yowordlist *strings)
 {
     struct yonode *cur;
     int i;
     int plen = strlen(prefix);
     char *newprefix;
     newprefix = malloc(plen + 2);
+    if(newprefix == NULL) return -1;
 
     for(i = 0; i < dawg->cursize; i++) {
         cur = dawg->edges[i];
@@ -143,34 +163,42 @@ void yodawg_build_strings(struct yonode *dawg, const char *prefix, struct yoword
             if(strings->cursize >= strings->maxsize) {
                 strings->maxsize *= 2;
                 strings->words = realloc(strings->words, strings->maxsize * sizeof (char *));
+                if(strings->words == NULL) return -1;
             }
             strings->words[strings->cursize] = malloc(plen + 1);
+            if(strings->words[strings->cursize] == NULL) return -1;
             strcpy(strings->words[strings->cursize], prefix);
             strings->cursize++;
         }
         else {
             strcpy(newprefix, prefix);
             strncat(newprefix, &(cur->value), 1);
-            yodawg_build_strings(cur, newprefix, strings);
+            if(yodawg_build_strings(cur, newprefix, strings)) return -1;
         }
     }
     free(newprefix);
+    return 0;
 }
 
 struct yowordlist *yodawg_create_wordlist(int size)
 {
     struct yowordlist *wordlist;
     wordlist = malloc(sizeof (struct yowordlist));
+    if(wordlist == NULL) return NULL;
     wordlist->cursize = 0;
     wordlist->maxsize = YO_STARTSIZE;
     wordlist->words = malloc(YO_STARTSIZE * sizeof (char *));
+    if(wordlist->words == NULL) {
+        free(wordlist);
+        return NULL;
+    }
     return wordlist;
 }
 
 void yodawg_free_wordlist(struct yowordlist *wordlist)
 {
-    if(wordlist == NULL) return;
     int i;
+    if(wordlist == NULL) return;
     for(i = 0; i < wordlist->cursize; i++)
         free(wordlist->words[i]);
     free(wordlist->words);
