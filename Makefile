@@ -1,7 +1,10 @@
 CFLAGS=-Wall -g
 
 all: yodawg.o
-	$(CC) yodawg.o main.c -o yodawg
+	$(CC) build/yodawg.o main.c -o yodawg
+
+yodawg.o:
+	$(CC) $(CFLAGS) -c src/yodawg.c -o build/yodawg.o
 
 clean:
-	rm -rf yodawg *.o
+	rm -rf yodawg build/*

@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "yodawg.h"
+#include "src/yodawg.h"
 
 int main(int argc, char **argv)
 {
